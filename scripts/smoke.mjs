@@ -62,7 +62,27 @@ try {
 
   console.log(`\n--- dns_lookup ${domain} (A) ---\n${dnsText}`);
 
-  if (call.result?.isError || dns.result?.isError) {
+  const availability = await request("tools/call", {
+    name: "domain_availability",
+    arguments: { domain },
+  });
+  const availabilityText =
+    availability.result?.content?.[0]?.text ?? JSON.stringify(availability, null, 2);
+
+  console.log(`\n--- domain_availability ${domain} ---\n${availabilityText}`);
+
+  const tld = "com.br";
+  const price = await request("tools/call", { name: "domain_price", arguments: { tld } });
+  const priceText = price.result?.content?.[0]?.text ?? JSON.stringify(price, null, 2);
+
+  console.log(`\n--- domain_price ${tld} ---\n${priceText}`);
+
+  if (
+    call.result?.isError ||
+    dns.result?.isError ||
+    availability.result?.isError ||
+    price.result?.isError
+  ) {
     process.exitCode = 1;
   }
 } finally {

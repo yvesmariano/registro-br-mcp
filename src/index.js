@@ -5,7 +5,9 @@ import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js"
 import { pathToFileURL } from "node:url";
 import { z } from "zod";
 
+import { fetchAvailability, formatAvailability } from "./availability.js";
 import { DNS_RECORD_TYPES, DEFAULT_DNS_TYPE, resolveDns } from "./dns.js";
+import { fetchPricePolicy, formatPricePolicy } from "./pricing.js";
 import {
   fetchRdap,
   formatAsnInfo,
@@ -85,6 +87,40 @@ export const TOOLS = [
     },
     errorLabel: "DNS record",
     run: async ({ name, type }) => ({ text: await resolveDns(name, type) }),
+  },
+  {
+    name: "domain_availability",
+    description:
+      "Check whether a .br domain is available for registration (Registro.br availability API)",
+    schema: {
+      domain: z
+        .string()
+        .describe("The domain to check (e.g., exemplo.com.br; a bare label defaults to .com.br)"),
+    },
+    errorLabel: "domain availability",
+    run: async ({ domain }) => {
+      const data = await fetchAvailability(domain);
+      return { text: formatAvailability(data), data };
+    },
+  },
+  {
+    name: "domain_price",
+    description: "Get the current and previous registration price for a .br category (TLD), in BRL",
+    schema: {
+      tld: z.string().describe("The .br category (e.g., com.br, net.br, nom.br)"),
+      years: z
+        .number()
+        .int()
+        .min(1)
+        .max(10)
+        .optional()
+        .describe("Registration period in years (defaults to 1; nom.br requires at least 3)"),
+    },
+    errorLabel: "domain price",
+    run: async ({ tld, years }) => {
+      const data = await fetchPricePolicy(tld);
+      return { text: formatPricePolicy(data, tld, years), data };
+    },
   },
 ];
 

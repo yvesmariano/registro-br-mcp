@@ -4,13 +4,15 @@ Um servidor [MCP (Model Context Protocol)](https://modelcontextprotocol.io/) par
 
 ## Ferramentas Disponíveis
 
-| Ferramenta    | Descrição                                                                                    |
-| ------------- | -------------------------------------------------------------------------------------------- |
-| `rdap_domain` | Consulta informações de domínios .br (ex: `nic.br`, `registro.br`)                           |
-| `rdap_entity` | Consulta entidades por CNPJ, CPF ou handle (ex: `05506560000136`, `FAN`)                     |
-| `rdap_ip`     | Consulta informações de IP ou rede (ex: `200.160.0.0`, `200.160.0.0/20`)                     |
-| `rdap_asn`    | Consulta Autonomous System Numbers (ex: `22548`, `AS22548`)                                  |
-| `dns_lookup`  | Resolve registros DNS A, AAAA, CNAME, NS, MX e TXT (ex: `vivenciasazuis.com.br`, `a.dns.br`) |
+| Ferramenta            | Descrição                                                                                    |
+| --------------------- | -------------------------------------------------------------------------------------------- |
+| `rdap_domain`         | Consulta informações de domínios .br (ex: `nic.br`, `registro.br`)                           |
+| `rdap_entity`         | Consulta entidades por CNPJ, CPF ou handle (ex: `05506560000136`, `FAN`)                     |
+| `rdap_ip`             | Consulta informações de IP ou rede (ex: `200.160.0.0`, `200.160.0.0/20`)                     |
+| `rdap_asn`            | Consulta Autonomous System Numbers (ex: `22548`, `AS22548`)                                  |
+| `dns_lookup`          | Resolve registros DNS A, AAAA, CNAME, NS, MX e TXT (ex: `vivenciasazuis.com.br`, `a.dns.br`) |
+| `domain_availability` | Verifica se um domínio .br está disponível (ex: `meunovodominio.com.br`)                     |
+| `domain_price`        | Consulta o preço atual e anterior de uma categoria .br (ex: `com.br`, `nom.br`)              |
 
 > A API RDAP do Registro.br não implementa o endpoint `/nameserver` (responde `501 Not Implemented`),
 > então a consulta de nameservers é feita via `dns_lookup` (tipos `NS`, `A`, `AAAA`) ou pelos
@@ -130,6 +132,8 @@ Após configurar, você pode fazer perguntas como:
 - "Qual o IP do nameserver a.dns.br?"
 - "Quais os registros A de vivenciasazuis.com.br?"
 - "Consulte a entidade com CNPJ 05506560000136"
+- "O domínio meunovodominio.com.br está disponível?"
+- "Quanto custa registrar um domínio .com.br por 3 anos?"
 
 ## Exemplo de Resposta
 
@@ -165,6 +169,20 @@ Este servidor utiliza a API RDAP pública do Registro.br:
 
 - Base URL: `https://rdap.registro.br`
 - Documentação: https://registro.br/rdap/
+
+## Disponibilidade e preços
+
+`domain_availability` e `domain_price` usam os endpoints que o próprio site do Registro.br consome
+(APIs internas, não documentadas publicamente — podem mudar sem aviso):
+
+- Disponibilidade: `GET https://registro.br/v2/ajax/avail/raw/<domínio>` (não exige token; um rótulo
+  sem ponto assume `.com.br`). O campo `status` segue o mapeamento do site: `0`/`1` disponível,
+  `2` já registrado, `3` indisponível/reservado, `4` consulta inválida, `5` aguardando início do
+  processo de liberação, `6`/`7` em processo de liberação e `8` falha na consulta.
+- Preços: `GET https://registro.br/v2/ajax/payment/policy/<categoria>` (exige o header
+  `X-XSRF-TOKEN`; o servidor emite o cookie `XSRF-TOKEN` em qualquer resposta, inclusive `400`, e o
+  MCP faz o retry automaticamente). Os valores vêm em centavos e o total é
+  `(periodValue × anos + feeValue) / 100`; `nom.br` exige no mínimo 3 anos.
 
 ## Desenvolvimento
 

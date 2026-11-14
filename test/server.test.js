@@ -16,6 +16,8 @@ const EXPECTED_TOOLS = [
   ["rdap_ip", "ip"],
   ["rdap_asn", "asn"],
   ["dns_lookup", "name"],
+  ["domain_availability", "domain"],
+  ["domain_price", "tld"],
 ];
 
 function startServer() {
@@ -69,7 +71,7 @@ function startServer() {
   };
 }
 
-test("createServer registers the five RDAP tools with a single required argument each", () => {
+test("createServer registers every tool with its main argument", () => {
   assert.equal(typeof createServer, "function");
   assert.deepEqual(
     TOOLS.map((tool) => [tool.name, Object.keys(tool.schema)[0]]),
